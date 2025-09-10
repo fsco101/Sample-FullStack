@@ -145,8 +145,6 @@ exports.getProducts = async (req, res) => {
     const productsCount = await Product.countDocuments();
 
     const products = await Product.find()
-
-
     if (!products)
         return res.status(400).json({ message: 'error loading products' })
     
