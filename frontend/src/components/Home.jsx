@@ -12,7 +12,7 @@ const Home = () => {
     const [loading, setLoading] = useState(true)
 
     const getProducts = async () => {
-        let link = `http://localhost:5173/api/v1/products`
+        let link = `http://localhost:4001/api/v1/products`
 
         let res = await axios.get(link)
         console.log(res)
