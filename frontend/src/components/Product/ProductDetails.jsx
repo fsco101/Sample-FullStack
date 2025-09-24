@@ -39,13 +39,9 @@ const ProductDetails = () => {
         try {
             let res = await axios.get(link)
             setProduct(res.data.product)
-
-
         } catch (err) {
             console.log(err)
             setError('Product not found')
-
-
         }
     }
 
