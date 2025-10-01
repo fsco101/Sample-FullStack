@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 
-const products = require('./routes/product');
+const products = require('./routes/products');
 const auth = require('./routes/auth');
 
 app.use(express.json({limit:'50mb'}));

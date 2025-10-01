@@ -18,32 +18,45 @@ class APIFeatures {
         return this;
     }
 
-    // filter() {
+    filter() {
+        // { 'price[gte]': '100', 'price[lte]': '1000' }
+        const queryCopy = { ...this.queryStr };
+        // console.log(queryCopy);
+        // Removing fields from the query
+        const removeFields = ['keyword',  'page']
+        removeFields.forEach(el => delete queryCopy[el]);
 
-    //     const queryCopy = { ...this.queryStr };
-    //     console.log(queryCopy);
-    //     // Removing fields from the query
-    //     const removeFields = ['keyword', 'limit', 'page']
-    //     removeFields.forEach(el => delete queryCopy[el]);
+        let priceFilter = {};
+        if (queryCopy['price[gte]'] || queryCopy['price[lte]']) {
+            priceFilter.price = {};
+            if (queryCopy['price[gte]']) {
+                priceFilter.price.$gte = Number(queryCopy['price[gte]']);
+            }
+            if (queryCopy['price[lte]']) {
+                priceFilter.price.$lte = Number(queryCopy['price[lte]']);
+            }
+// priceFilter {
+//     price: {
+//         $gte: 100,
+//         $lte: 1000
+//     }
+// }
+            delete queryCopy['price[gte]'];
+            delete queryCopy['price[lte]'];
+        }
 
-    //     // Advance filter for price, ratings etc
-    //     let queryStr = JSON.stringify(queryCopy);
-    //     // console.log(queryCopy.price.gte);
-    //     queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, match => `$${match}`)
-    //     this.query = this.query.find(JSON.parse(queryStr));
-    //     // this.query = this.query.find(JSON.parse(queryStr));
-    //     // console.log(JSON.parse(queryStr));
-    //     // this.query = this.query.where('price').gte(queryCopy.price.gte).lte(queryCopy.price.lte)
-    //     // console.log(this.query)
-    //     return this;
-    // }
+        console.log(queryCopy);
 
-    // pagination(resPerPage) {
-    //     const currentPage = Number(this.queryStr.page) || 1;
-    //     const skip = resPerPage * (currentPage - 1);
+        this.query = this.query.find(priceFilter);
+        return this;
+    }
 
-    //     this.query = this.query.limit(resPerPage).skip(skip);
-    //     return this;
-    // }
+    pagination(resPerPage) {
+        const currentPage = Number(this.queryStr.page) || 1;
+        const skip = resPerPage * (currentPage - 1);
+
+        this.query = this.query.limit(resPerPage).skip(skip);
+        return this;
+    }
 }
 module.exports = APIFeatures
