@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation, useParams } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 import Loader from '../Layout/Loader'
 import MetaData from '../Layout/MetaData';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { authenticate, getUser } from '../../Utils/helpers';
+import { authenticate, getUser } from '../../utils/helpers';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
     let navigate = useNavigate()
     let location = useLocation()
 
@@ -22,6 +23,9 @@ const Login = () => {
 
     const login = async (email, password) => {
         try {
+            setLoading(true);
+            setError('');
+            
             const config = {
                 headers: {
                     'Content-Type': 'application/json'
@@ -29,11 +33,14 @@ const Login = () => {
             }
             const { data } = await axios.post(`http://localhost:4001/api/v1/login`, { email, password }, config)
             console.log(data)
+            setLoading(false);
             authenticate(data, () => navigate("/"))
 
-        } catch (error) {
-            
-            toast.error("invalid user or password", {
+        } catch (err) {
+            setLoading(false);
+            const errorMessage = err.response?.data?.message || 'Login failed';
+            setError(errorMessage);
+            toast.error(errorMessage, {
                 position: 'bottom-right'
             })
         }
@@ -45,7 +52,7 @@ console.log(redirect)
         if (getUser()  ) {
              navigate('/')
         }
-    }, [])
+    }, [navigate])
     return (
         <>
             {loading ? <Loader /> : (
@@ -58,6 +65,7 @@ console.log(redirect)
                                 onSubmit={submitHandler}
                             >
                                 <h1 className="mb-3">Login</h1>
+                                {error && <div className="alert alert-danger">{error}</div>}
                                 <div className="form-group">
                                     <label htmlFor="email_field">Email</label>
                                     <input
@@ -86,8 +94,9 @@ console.log(redirect)
                                     id="login_button"
                                     type="submit"
                                     className="btn btn-block py-3"
+                                    disabled={loading}
                                 >
-                                    LOGIN
+                                    {loading ? 'LOGGING IN...' : 'LOGIN'}
                                 </button>
 
                                 <Link to="/register" className="float-right mt-3">New User?</Link>

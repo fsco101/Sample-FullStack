@@ -18,7 +18,7 @@ const Register = () => {
     const [avatarPreview, setAvatarPreview] = useState('/images/default_avatar.jpg')
    
     const [error, setError] = useState('')
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
    
 
     let navigate = useNavigate()
@@ -37,6 +37,8 @@ const Register = () => {
 
     const submitHandler = (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError(''); // Clear previous errors
 
         const formData = new FormData();
         formData.set('name', name);
@@ -84,9 +86,9 @@ const Register = () => {
 
         } catch (error) {
             setLoading(false)
-            setUser(null)
-            setError(error.response.data.message)
-            console.log(error.response.data.message)
+            // Don't set user to null, keep the form data
+            setError(error.response?.data?.message || 'Registration failed')
+            console.log(error.response?.data?.message || error.message)
         }
     }
 
@@ -102,6 +104,8 @@ const Register = () => {
                 <div className="col-10 col-lg-5">
                     <form className="shadow-lg" onSubmit={submitHandler} encType='multipart/form-data'>
                         <h1 className="mb-3">Register</h1>
+
+                        {error && <div className="alert alert-danger">{error}</div>}
 
                         <div className="form-group">
                             <label htmlFor="email_field">Name</label>
@@ -171,9 +175,9 @@ const Register = () => {
                             id="register_button"
                             type="submit"
                             className="btn btn-block py-3"
-                            // disabled={loading ? false : true}
+                            disabled={loading}
                         >
-                            REGISTER
+                            {loading ? 'REGISTERING...' : 'REGISTER'}
                         </button>
                     </form>
                 </div>
