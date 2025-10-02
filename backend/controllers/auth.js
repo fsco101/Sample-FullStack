@@ -6,147 +6,68 @@ const cloudinary = require('cloudinary')
 const sendEmail = require('../utils/sendEmail')
 
 exports.registerUser = async (req, res, next) => {
-    try {
-        console.log(req.body);
-        console.log(req.file);
+console.log(req.body)
+    const result = await cloudinary.v2.uploader.upload(req.body.avatar, {
+        folder: 'avatars',
+        width: 150,
+        crop: "scale"
+    }, (err, res) => {
+        console.log(err, res);
+    });
+    const { name, email, password, } = req.body;
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar: {
+            public_id: result.public_id,
+            url: result.secure_url
+        },
+    })
+    //test token
+    const token = user.getJwtToken();
 
-        const { name, email, password } = req.body;
-
-        // Check if all required fields are provided
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide name, email, and password'
-            });
-        }
-
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: 'User already exists with this email'
-            });
-        }
-
-        let avatar = {
-            public_id: 'default_avatar',
-            url: '/images/default_avatar.jpg'
-        };
-
-        // Handle avatar upload if provided
-        if (req.file) {
-            try {
-                const result = await cloudinary.v2.uploader.upload(req.file.path, {
-                    folder: 'avatars',
-                    width: 150,
-                    crop: "scale"
-                });
-                
-                avatar = {
-                    public_id: result.public_id,
-                    url: result.secure_url
-                };
-            } catch (uploadError) {
-                console.log('Cloudinary upload error:', uploadError);
-                // Continue with default avatar if upload fails
-            }
-        } else if (req.body.avatar && req.body.avatar !== '') {
-            try {
-                const result = await cloudinary.v2.uploader.upload(req.body.avatar, {
-                    folder: 'avatars',
-                    width: 150,
-                    crop: "scale"
-                });
-                
-                avatar = {
-                    public_id: result.public_id,
-                    url: result.secure_url
-                };
-            } catch (uploadError) {
-                console.log('Cloudinary upload error:', uploadError);
-                // Continue with default avatar if upload fails
-            }
-        }
-
-        const user = await User.create({
-            name,
-            email,
-            password,
-            avatar
-        });
-
-        const token = user.getJwtToken();
-
-        return res.status(201).json({
-            success: true,
-            user,
-            token
-        });
-
-    } catch (error) {
-        console.error('Registration error:', error);
-        return res.status(500).json({
-            success: false,
-            message: error.message || 'Server Error'
-        });
-    }
+    return res.status(201).json({
+        success: true,
+        user,
+        token
+    })
+    // sendToken(user, 200, res)
 }
 
 exports.loginUser = async (req, res, next) => {
-    try {
-        console.log('Login request received:', req.body);
-        const { email, password } = req.body;
+    const { email, password } = req.body;
 
-        // Checks if email and password is entered by user
-        if (!email || !password) {
-            console.log('Missing email or password');
-            return res.status(400).json({ 
-                success: false,
-                message: 'Please enter email & password' 
-            });
-        }
-
-        // Finding user in database
-        console.log('Looking for user with email:', email);
-        let user = await User.findOne({ email }).select('+password');
-        if (!user) {
-            console.log('User not found');
-            return res.status(401).json({ 
-                success: false,
-                message: 'Invalid Email or Password' 
-            });
-        }
-
-        console.log('User found, checking password');
-        // Checks if password is correct or not
-        const isPasswordMatched = await user.comparePassword(password);
-
-        if (!isPasswordMatched) {
-            console.log('Password does not match');
-            return res.status(401).json({ 
-                success: false,
-                message: 'Invalid Email or Password' 
-            });
-        }
-
-        console.log('Password matched, generating token');
-        const token = user.getJwtToken();
-
-        console.log('Login successful');
-        res.status(200).json({
-            success: true,
-            token,
-            user
-        });
-
-    } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({
-            success: false,
-            message: error.message || 'Server Error'
-        });
+    // Checks if email and password is entered by user
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Please enter email & password' })
     }
+
+
+    // Finding user in database
+
+    let user = await User.findOne({ email }).select('+password')
+    if (!user) {
+        return res.status(401).json({ message: 'Invalid Email or Password' })
+    }
+
+
+    // Checks if password is correct or not
+    const isPasswordMatched = await user.comparePassword(password);
+
+
+    if (!isPasswordMatched) {
+        return res.status(401).json({ message: 'Invalid Email or Password' })
+    }
+    const token = user.getJwtToken();
+
+    res.status(201).json({
+        success: true,
+        token,
+        user
+    });
+    //  user = await User.findOne({ email })
+    // sendToken(user, 200, res)
 }
 
 exports.forgotPassword = async (req, res, next) => {
@@ -180,4 +101,48 @@ exports.forgotPassword = async (req, res, next) => {
         return res.status(500).json({ error: error.message })
       
     }
+}
+
+exports.resetPassword = async (req, res, next) => {
+    console.log(req.params.token)
+    // Hash URL token
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+    const user = await User.findOne({
+        // resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }
+    })
+    console.log(user)
+
+    if (!user) {
+        return res.status(400).json({ message: 'Password reset token is invalid or has been expired' })
+        
+    }
+
+    if (req.body.password !== req.body.confirmPassword) {
+        return res.status(400).json({ message: 'Password does not match' })
+
+    }
+
+    // Setup new password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+    const token = user.getJwtToken();
+    return res.status(201).json({
+        success: true,
+        token,
+        user
+    });
+   
+}
+
+exports.getUserProfile = async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+    console.log(user)
+
+    return res.status(200).json({
+        success: true,
+        user
+    })
 }
