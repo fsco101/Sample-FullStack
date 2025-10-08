@@ -14,6 +14,7 @@ import { ToastContainer, } from 'react-toastify';
 import ForgotPassword from './Components/User/ForgotPassword';
 import NewPassword from './Components/User/NewPassword';
 import Profile from './Components/User/Profile';
+import UpdateProfile from './Components/User/UpdateProfile';
 function App() {
 
 
@@ -30,6 +31,8 @@ function App() {
           <Route path="/password/forgot" element={<ForgotPassword />} exact="true" />
           <Route path="/password/reset/:token" element={<NewPassword />} exact="true" />
           <Route path="/me" element={<Profile />} exact="true" />
+          <Route path="/me/update" element={<UpdateProfile />} exact="true"
+          />
         </Routes>
 
       </Router>

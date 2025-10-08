@@ -1,86 +1,171 @@
-import React, { Fragment, useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import Loader from '../Layout/Loader'
+import React, {  useState, useEffect } from 'react'
 import MetaData from '../Layout/MetaData'
-
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 import { getToken } from '../../utils/helpers';
 
-const Profile = () => {
-   
-    const [loading, setLoading] = useState(true)
-    const [user, setUser] = useState('')
+
+const UpdateProfile = () => {
     
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [avatar, setAvatar] = useState('')
+    const [avatarPreview, setAvatarPreview] = useState('/images/default_avatar.jpg')
+    const [error, setError] = useState('')
+    const [user, setUser] = useState({})
+    const [loading, setLoading] = useState(false)
+    const [isUpdated, setIsUpdated] = useState(false)
+    let navigate = useNavigate();
 
     const getProfile = async () => {
         const config = {
             headers: {
+                // 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getToken()}`
             }
         }
         try {
-            const { data } = await axios.get(`http://localhost:4001/api/v1/me`, config)
-            console.log(data.user)
-            setUser(data.user)
+            const { data } = await axios.get(`${import.meta.env.VITE_API}/me`, config)
+            console.log(data)
+            // setUser(data.user)
+            setName(data.user.name);
+            setEmail(data.user.email);
+            setAvatarPreview(data.user.avatar.url)
             setLoading(false)
         } catch (error) {
-            console.log(error)
-            toast.error("invalid user or password", {
-                position: 'bottom-center'
-            })
+            toast.error('user not found', {
+                position: 'bottom-right'
+            });
         }
-
     }
-    
+
+    const updateProfile = async (userData) => {
+        const config = {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+        try {
+            const { data } = await axios.put(`${import.meta.env.VITE_API}/me/update`, userData, config)
+            setIsUpdated(data.success)
+            setLoading(false)
+            toast.success('user updated', {
+                position: 'bottom-right'
+            });
+            //  getProfile();
+            navigate('/me', { replace: true })
+
+
+        } catch (error) {
+            console.log(error)
+            toast.error('user not found', {
+                position: 'bottom-right'
+            });
+        }
+    }
+
+    console.log(error)
     useEffect(() => {
-        
         getProfile()
 
     }, [])
+
+    const submitHandler = (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.set('name', name);
+        formData.set('email', email);
+        formData.set('avatar', avatar);
+        updateProfile(formData)
+    }
+
+    const onChange = e => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            if (reader.readyState === 2) {
+                setAvatarPreview(reader.result)
+                setAvatar(reader.result)
+            }
+        }
+
+        reader.readAsDataURL(e.target.files[0])
+
+    }
+    // console.log(user)
+
+    
     return (
         <>
-            {loading ? <Loader /> : (
-                <>
-                    <MetaData title={'Your Profile'} />
+            <MetaData title={'Update Profile'} />
 
-                    <h2 className="mt-5 ml-5">My Profile</h2>
-                    <div className="row justify-content-around mt-5 user-info">
-                        <div className="col-12 col-md-3">
-                            <figure className='avatar avatar-profile'>
-                                <img className="rounded-circle img-fluid" src={user.avatar ? user.avatar.url : null} alt={user.name} />
-                            </figure>
-                            <Link to="/me/update" id="edit_profile" className="btn btn-primary btn-block my-5">
-                                Edit Profile
-                            </Link>
+            <div className="row wrapper">
+                <div className="col-10 col-lg-5">
+                    <form className="shadow-lg" onSubmit={submitHandler} encType='multipart/form-data'>
+                        <h1 className="mt-2 mb-5">Update Profile</h1>
+
+                        <div className="form-group">
+                            <label htmlFor="email_field">Name</label>
+                            <input
+                                type="name"
+                                id="name_field"
+                                className="form-control"
+                                name='name'
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
                         </div>
 
-                        <div className="col-12 col-md-5">
-                            <h4>Full Name</h4>
-                            <p>{user.name}</p>
-
-                            <h4>Email Address</h4>
-                            <p>{user.email}</p>
-
-                            <h4>Joined On</h4>
-                            <p>{String(user.createdAt).substring(0, 10)}</p>
-
-                            {user.role !== 'admin' && (
-                                <Link to="/orders/me" className="btn btn-danger btn-block mt-5">
-                                    My Orders
-                                </Link>
-                            )}
-
-                            <Link to="/password/update" className="btn btn-primary btn-block mt-3">
-                                Change Password
-                            </Link>
+                        <div className="form-group">
+                            <label htmlFor="email_field">Email</label>
+                            <input
+                                type="email"
+                                id="email_field"
+                                className="form-control"
+                                name='email'
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                         </div>
-                    </div>
-                </>
-             )}
+
+                        <div className='form-group'>
+                            <label htmlFor='avatar_upload'>Avatar</label>
+                            <div className='d-flex align-items-center'>
+                                <div>
+                                    <figure className='avatar mr-3 item-rtl'>
+                                        <img
+                                            src={avatarPreview}
+                                            className='rounded-circle'
+                                            alt='Avatar Preview'
+                                        />
+                                    </figure>
+                                </div>
+                                <div className='custom-file'>
+                                    <input
+                                        type='file'
+                                        name='avatar'
+                                        className='custom-file-input'
+                                        id='customFile'
+                                        accept='image/*'
+                                        onChange={onChange}
+                                    />
+                                    <label className='custom-file-label' htmlFor='customFile'>
+                                        Choose Avatar
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" className="btn update-btn btn-block mt-4 mb-3" disabled={loading ? true : false} >Update</button>
+                    </form>
+                </div>
+            </div>
         </>
     )
 }
 
-export default Profile
+export default UpdateProfile
