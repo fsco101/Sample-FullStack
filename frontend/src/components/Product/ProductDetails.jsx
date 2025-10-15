@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
-const ProductDetails = () => {
+const ProductDetails = ({ addItemToCart, cartItems,}) => {
     const [product, setProduct] = useState({})
     const [error, setError] = useState('')
     const [quantity, setQuantity] = useState(1)
@@ -106,11 +106,16 @@ const ProductDetails = () => {
 
     // }
 
+     const addToCart = async () => {
+        await addItemToCart(id, quantity);
+    }
 
     useEffect(() => {
         productDetails(id)
     }, [id,]);
-    // localStorage.setItem('cartItems', JSON.stringify(cartItems))
+
+   
+    localStorage.setItem('cartItems', JSON.stringify(cartItems))
     return (
         <>
             <MetaData title={product.name} />
@@ -148,7 +153,7 @@ const ProductDetails = () => {
                     </div>
 
 
-                    <button type="button" id="cart_btn" className="btn btn-primary d-inline ml-4" disabled={product.stock === 0} >Add to Cart</button>
+                    <button type="button" id="cart_btn" className="btn btn-primary d-inline ml-4" disabled={product.stock === 0} onClick={addToCart} >Add to Cart</button>
                     <hr />
 
                     <p>Status: <span id="stock_status" className={product.stock > 0 ? 'greenColor' : 'redColor'} >{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</span></p>
