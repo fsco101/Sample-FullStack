@@ -14,7 +14,7 @@ import { ToastContainer, } from 'react-toastify';
 import ForgotPassword from './Components/User/ForgotPassword';
 import NewPassword from './Components/User/NewPassword';
 import Profile from './Components/User/Profile';
-import UpdateProfile from './Components/User/UpdateProfile';
+// import UpdateProfile from './Components/User/UpdateProfile';
 function App() {
 
 
