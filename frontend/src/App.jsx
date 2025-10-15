@@ -21,6 +21,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Cart from './Components/Cart/Cart';
+import Shipping from './Components/Cart/Shipping';
 function App() {
 
   const [state, setState] = useState({
@@ -85,6 +86,14 @@ function App() {
     localStorage.setItem('cartItems', JSON.stringify(state.cartItems))
   }
 
+  const saveShippingInfo = async (data) => {
+    setState({
+      ...state,
+      shippingInfo: data
+    })
+    localStorage.setItem('shippingInfo', JSON.stringify(data))
+  }
+
 
   return (
     <>
@@ -102,7 +111,8 @@ function App() {
           <Route path="/me/update" element={<UpdateProfile />} exact="true"
           />
           <Route path="/password/update" element={<UpdatePassword />} />
-          <Route path="/cart" element={<Cart cartItems={state.cartItems} addItemToCart={addItemToCart} removeItemFromCart={removeItemFromCart}/>} exact="true" />
+          <Route path="/cart" element={<Cart cartItems={state.cartItems} addItemToCart={addItemToCart} removeItemFromCart={removeItemFromCart} />} exact="true" />
+          <Route path="/shipping" element={<Shipping shipping={state.shippingInfo} saveShippingInfo={saveShippingInfo} />} />
         </Routes>
 
       </Router>
