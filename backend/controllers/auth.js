@@ -6,33 +6,45 @@ const cloudinary = require('cloudinary')
 const sendEmail = require('../utils/sendEmail')
 
 exports.registerUser = async (req, res, next) => {
-console.log(req.body)
-    const result = await cloudinary.v2.uploader.upload(req.body.avatar, {
-        folder: 'avatars',
-        width: 150,
-        crop: "scale"
-    }, (err, res) => {
-        console.log(err, res);
-    });
-    const { name, email, password, } = req.body;
-    const user = await User.create({
-        name,
-        email,
-        password,
-        avatar: {
-            public_id: result.public_id,
-            url: result.secure_url
-        },
-    })
-    //test token
-    const token = user.getJwtToken();
+    try {
+        console.log(req.body)
+        let result;
+        if (req.file) {
+            result = await cloudinary.v2.uploader.upload(req.file.buffer, {
+                folder: 'avatars',
+                width: 150,
+                crop: "scale",
+                resource_type: 'auto'
+            });
+        } else {
+            // Use a default avatar if no file uploaded
+            result = {
+                public_id: 'default_avatar',
+                secure_url: '/images/default_avatar.jpg'
+            };
+        }
+        const { name, email, password, } = req.body;
+        const user = await User.create({
+            name,
+            email,
+            password,
+            avatar: {
+                public_id: result.public_id,
+                url: result.secure_url
+            },
+        })
+        //test token
+        const token = user.getJwtToken();
 
-    return res.status(201).json({
-        success: true,
-        user,
-        token
-    })
-    // sendToken(user, 200, res)
+        return res.status(201).json({
+            success: true,
+            user,
+            token
+        })
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Registration failed', error: error.message });
+    }
 }
 
 exports.loginUser = async (req, res, next) => {

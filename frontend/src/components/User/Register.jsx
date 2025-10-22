@@ -1,4 +1,4 @@
-import React, {  useState, useEffect } from 'react'
+import React, {  useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MetaData from '../Layout/MetaData'
 import axios from 'axios'
@@ -14,7 +14,7 @@ const Register = () => {
 
     const { name, email, password } = user;
 
-    const [avatar, setAvatar] = useState('')
+    const [avatar, setAvatar] = useState(null)
     const [avatarPreview, setAvatarPreview] = useState('/images/default_avatar.jpg')
    
     const [error, setError] = useState('')
@@ -44,7 +44,9 @@ const Register = () => {
         formData.set('name', name);
         formData.set('email', email);
         formData.set('password', password);
-        formData.set('avatar', avatar);
+        if (avatar) {
+            formData.append('avatar', avatar);
+        }
       
        register(formData)
     }
@@ -52,16 +54,18 @@ const Register = () => {
     const onChange = e => {
         if (e.target.name === 'avatar') {
 
+            const file = e.target.files[0];
+            setAvatar(file);
+
             const reader = new FileReader();
 
             reader.onload = () => {
                 if (reader.readyState === 2) {
                     setAvatarPreview(reader.result)
-                    setAvatar(reader.result)
                 }
             }
 
-            reader.readAsDataURL(e.target.files[0])
+            reader.readAsDataURL(file)
 
         } else {
             setUser({ ...user, [e.target.name]: e.target.value })
